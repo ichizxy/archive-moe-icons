@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+/导出图标/*
+!/导出图标/.gitkeep
+/本地备份/
+*.zip
+*.7z
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini

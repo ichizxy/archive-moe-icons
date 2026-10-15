@@ -1,0 +1,239 @@
+[
+  {
+    "id": "7z",
+    "label": "7Z",
+    "hair": "#2877F5",
+    "body": "#2877F5",
+    "extensions": [
+      "7z"
+    ]
+  },
+  {
+    "id": "zip",
+    "label": "ZIP",
+    "hair": "#159363",
+    "body": "#159363",
+    "extensions": [
+      "zip",
+      "zipx",
+      "z01"
+    ]
+  },
+  {
+    "id": "rar",
+    "label": "RAR",
+    "hair": "#8252CF",
+    "body": "#8252CF",
+    "extensions": [
+      "rar",
+      "r00"
+    ]
+  },
+  {
+    "id": "tar",
+    "label": "TAR",
+    "hair": "#B68025",
+    "body": "#B68025",
+    "extensions": [
+      "tar"
+    ]
+  },
+  {
+    "id": "gz",
+    "label": "GZ",
+    "hair": "#168B9F",
+    "body": "#168B9F",
+    "extensions": [
+      "gz",
+      "gzip",
+      "tgz"
+    ]
+  },
+  {
+    "id": "bz2",
+    "label": "BZ2",
+    "hair": "#535FBD",
+    "body": "#535FBD",
+    "extensions": [
+      "bz2",
+      "bzip2",
+      "tbz",
+      "tbz2"
+    ]
+  },
+  {
+    "id": "xz",
+    "label": "XZ",
+    "hair": "#D46730",
+    "body": "#D46730",
+    "extensions": [
+      "xz",
+      "txz"
+    ]
+  },
+  {
+    "id": "zst",
+    "label": "ZST",
+    "hair": "#CE4D70",
+    "body": "#CE4D70",
+    "extensions": [
+      "zst",
+      "tzst"
+    ]
+  },
+  {
+    "id": "lzma",
+    "label": "LZMA",
+    "hair": "#6876BE",
+    "body": "#6876BE",
+    "extensions": [
+      "lzma",
+      "lzma86"
+    ]
+  },
+  {
+    "id": "cab",
+    "label": "CAB",
+    "hair": "#597994",
+    "body": "#597994",
+    "extensions": [
+      "cab"
+    ]
+  },
+  {
+    "id": "arj",
+    "label": "ARJ",
+    "hair": "#A47B3B",
+    "body": "#A47B3B",
+    "extensions": [
+      "arj"
+    ]
+  },
+  {
+    "id": "lzh",
+    "label": "LZH",
+    "hair": "#85813F",
+    "body": "#85813F",
+    "extensions": [
+      "lzh",
+      "lha"
+    ]
+  },
+  {
+    "id": "z",
+    "label": "Z",
+    "hair": "#738196",
+    "body": "#738196",
+    "extensions": [
+      "z",
+      "taz"
+    ]
+  },
+  {
+    "id": "wim",
+    "label": "WIM",
+    "hair": "#287AC3",
+    "body": "#287AC3",
+    "extensions": [
+      "wim",
+      "swm",
+      "esd",
+      "ppkg"
+    ]
+  },
+  {
+    "id": "iso",
+    "label": "ISO",
+    "hair": "#1788A8",
+    "body": "#1788A8",
+    "extensions": [
+      "iso",
+      "udf"
+    ]
+  },
+  {
+    "id": "dmg",
+    "label": "DMG",
+    "hair": "#8064B7",
+    "body": "#8064B7",
+    "extensions": [
+      "dmg"
+    ]
+  },
+  {
+    "id": "img",
+    "label": "IMG",
+    "hair": "#537F79",
+    "body": "#537F79",
+    "extensions": [
+      "img"
+    ]
+  },
+  {
+    "id": "vhd",
+    "label": "VHD",
+    "hair": "#4379AB",
+    "body": "#4379AB",
+    "extensions": [
+      "vhd"
+    ]
+  },
+  {
+    "id": "vhdx",
+    "label": "VHDX",
+    "hair": "#3C618F",
+    "body": "#3C618F",
+    "extensions": [
+      "vhdx",
+      "avhdx"
+    ]
+  },
+  {
+    "id": "vmdk",
+    "label": "VMDK",
+    "hair": "#B87B32",
+    "body": "#B87B32",
+    "extensions": [
+      "vmdk"
+    ]
+  },
+  {
+    "id": "vdi",
+    "label": "VDI",
+    "hair": "#986650",
+    "body": "#986650",
+    "extensions": [
+      "vdi"
+    ]
+  },
+  {
+    "id": "qcow2",
+    "label": "QCOW2",
+    "hair": "#477958",
+    "body": "#477958",
+    "extensions": [
+      "qcow",
+      "qcow2",
+      "qcow2c"
+    ]
+  },
+  {
+    "id": "rpm",
+    "label": "RPM",
+    "hair": "#B54D53",
+    "body": "#B54D53",
+    "extensions": [
+      "rpm"
+    ]
+  },
+  {
+    "id": "deb",
+    "label": "DEB",
+    "hair": "#C04369",
+    "body": "#C04369",
+    "extensions": [
+      "deb",
+      "udeb"
+    ]
+  }
+]

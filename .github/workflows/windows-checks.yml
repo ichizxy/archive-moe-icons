@@ -20,5 +20,8 @@ jobs:
       - name: Verify registry backup and restore
         shell: powershell
         run: .\tests\Test-IconScripts.ps1
+      - name: Verify icon updates bypass stale cache
+        shell: powershell
+        run: .\tests\Test-IconCache.ps1
       - name: Verify desktop window initialization
         run: python ".\工具\icon_customizer.py" --smoke-ui

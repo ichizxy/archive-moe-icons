@@ -95,7 +95,11 @@ function Get-ArchiveIconPlan {
         if (-not (Test-Path -LiteralPath $icon -PathType Leaf)) { throw "Missing icon: $icon" }
         $header = [IO.File]::ReadAllBytes($icon)
         if ($header.Length -lt 6 -or $header[0] -ne 0 -or $header[1] -ne 0 -or $header[2] -ne 1 -or $header[3] -ne 0) { throw "Invalid ICO: $icon" }
-        $iconValue = '"' + $icon + '",0'
+        # Explorer can keep a cached image when an ICO is replaced in place.
+        # Give each distinct file content a stable, immutable icon location.
+        $iconHash = (Get-FileHash -LiteralPath $icon -Algorithm SHA256).Hash.ToLowerInvariant()
+        $iconPath = Join-Path (Join-Path (Join-Path ([IO.Path]::GetFullPath($PackRoot)) '本地图标缓存') $iconHash) ($item.id + '.ico')
+        $iconValue = '"' + $iconPath + '",0'
         foreach ($suffix in $item.extensions) {
             $extension = '.' + [string]$suffix
             if ($extension -notmatch '^\.[A-Za-z0-9][A-Za-z0-9._-]{0,31}$') { throw "Invalid extension: $extension" }
@@ -106,11 +110,37 @@ function Get-ArchiveIconPlan {
                     if ($targets[$subKey].IconValue -ne $iconValue) { throw "Formats share a ProgID but need different icons: $progId" }
                     continue
                 }
-                $targets[$subKey] = [pscustomobject]@{ Format = [string]$item.label; Extension = $extension; ProgId = $progId; SubKey = $subKey; IconValue = $iconValue }
+                $targets[$subKey] = [pscustomobject]@{ Format = [string]$item.label; Extension = $extension; ProgId = $progId; SubKey = $subKey; IconValue = $iconValue; SourceIcon = $icon; IconPath = $iconPath; IconHash = $iconHash }
             }
         }
     }
     @($targets.Values)
+}
+
+function Write-ArchiveCachedIcons {
+    param([Parameter(Mandatory)][object[]]$Targets)
+    $written = @{}
+    foreach ($target in $Targets) {
+        $source = [string]$target.SourceIcon
+        $destination = [string]$target.IconPath
+        $expected = [string]$target.IconHash
+        if ($written.ContainsKey($destination)) { continue }
+        if ($expected -notmatch '^[0-9a-f]{64}$' -or (Split-Path -Leaf (Split-Path -Parent $destination)) -ne $expected) { throw 'Invalid cached icon path or hash.' }
+        if ((Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -ne $expected) { throw "Icon changed during application. Please retry: $source" }
+        if (Test-Path -LiteralPath $destination) {
+            if ((Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash -ne $expected) { throw "Cached icon is damaged: $destination" }
+        } else {
+            $directory = [IO.Path]::GetDirectoryName($destination)
+            [IO.Directory]::CreateDirectory($directory) | Out-Null
+            $temporary = Join-Path $directory ([Guid]::NewGuid().ToString('N') + '.tmp')
+            try {
+                [IO.File]::Copy($source, $temporary, $false)
+                if ((Get-FileHash -LiteralPath $temporary -Algorithm SHA256).Hash -ne $expected) { throw "Icon changed while being copied: $source" }
+                [IO.File]::Move($temporary, $destination)
+            } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force } }
+        }
+        $written[$destination] = $true
+    }
 }
 
 function Get-ArchiveUserSid { [Security.Principal.WindowsIdentity]::GetCurrent().User.Value }
@@ -167,7 +197,8 @@ namespace ArchiveMoe {
 }
 '@
     }
-    [ArchiveMoe.NativeShell]::SHChangeNotify(0x08000000, 0, [IntPtr]::Zero, [IntPtr]::Zero)
+    # SHCNF_IDLIST | SHCNF_FLUSH: deliver the association change before exit.
+    [ArchiveMoe.NativeShell]::SHChangeNotify(0x08000000, 0x1000, [IntPtr]::Zero, [IntPtr]::Zero)
 }
 
-Export-ModuleMember -Function Get-ArchiveDefaultSnapshot, Set-ArchiveDefaultIcon, Restore-ArchiveDefaultSnapshot, Get-ArchiveEffectiveProgId, Get-ArchiveIconPlan, Get-ArchiveUserSid, New-ArchiveBackupDocument, Read-ArchiveBackup, Write-ArchiveBackup, Merge-ArchiveOriginalBackup, Send-ArchiveIconRefresh
+Export-ModuleMember -Function Get-ArchiveDefaultSnapshot, Set-ArchiveDefaultIcon, Restore-ArchiveDefaultSnapshot, Get-ArchiveEffectiveProgId, Get-ArchiveIconPlan, Write-ArchiveCachedIcons, Get-ArchiveUserSid, New-ArchiveBackupDocument, Read-ArchiveBackup, Write-ArchiveBackup, Merge-ArchiveOriginalBackup, Send-ArchiveIconRefresh

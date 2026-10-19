@@ -22,6 +22,7 @@ if ($WhatIfPreference) {
 }
 $selected = @($plan | Where-Object { $PSCmdlet.ShouldProcess(('HKCU\' + $_.SubKey), '替换文件图标') })
 if ($selected.Count -eq 0) { return }
+Write-ArchiveCachedIcons -Targets $selected
 $snapshots = @($selected | ForEach-Object { Get-ArchiveDefaultSnapshot $_.SubKey })
 $backupRoot = Join-Path $packRoot '本地备份'
 $sessionPath = Join-Path $backupRoot ('apply-' + [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-fff') + '-' + [Guid]::NewGuid().ToString('N') + '.json')

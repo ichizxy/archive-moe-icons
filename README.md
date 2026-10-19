@@ -6,7 +6,13 @@
 
 ![整套图标预览](预览图/整套图标预览.png)
 
-## v1.1.0：小尺寸简洁，大尺寸精细
+## v1.1.1：更新后刷新图标缓存
+
+应用脚本会将 ICO 按内容的 SHA-256 保存到 `本地图标缓存/`，再设置图标路径。图标内容更新或改色后会使用新路径，避免资源管理器沿用旧路径缓存；重复应用同一套图标会复用已有文件。缓存目录保留旧版本，以支持会话备份恢复，不会上传到 GitHub。
+
+已应用旧版时，更新完整工具包后再运行一次 `应用文件图标.cmd`。若已有窗口尚未更新，重新打开该文件夹。
+
+## 小尺寸简洁，大尺寸精细
 
 默认成品将两套画面放进同一个 ICO：**16、24、32、48 px 使用简洁标签，64、128、256 px 使用精细角色**。Windows 根据请求的图标尺寸选取对应图像，切换文件夹的查看大小时无需手动更换图标。
 
@@ -26,10 +32,12 @@
 
 前往 [Releases](https://github.com/ichizxy/archive-moe-icons/releases/latest) 下载：
 
-- `archive-moe-icons-v1.1.0.zip`：完整项目，含图标、改色工具、自动替换脚本和文档。
-- `archive-moe-icons-ico-v1.1.0.zip`：仅 ICO 图标及预览，适合手动设置图标。
+- `archive-moe-icons-v1.1.1.zip`：完整项目，含图标、改色工具、自动替换脚本和文档。
+- `archive-moe-icons-ico-v1.1.1.zip`：仅 ICO 图标及预览，适合手动设置图标。
 
 解压完整包到固定位置后再应用图标。注册表会记录 ICO 的完整路径；移动目录后，需要在新位置重新运行应用脚本。
+
+应用后请保留 `本地图标缓存/`，其中保存注册表实际引用的图标。
 
 ## 功能
 
@@ -185,6 +193,7 @@ archive-moe-icons/
 ├─ 生成提示词/
 ├─ 导出图标/             # 本地导出结果，不提交生成文件
 ├─ 本地备份/             # 首次备份和会话快照，执行应用后生成
+├─ 本地图标缓存/         # 实际应用的图标，按内容分目录，本地生成
 └─ tests/                # 图像导出和注册表备份/恢复测试
 ```
 
@@ -196,7 +205,7 @@ archive-moe-icons/
 
 **图标没有立即更新**
 
-更新到新版后重新运行 `应用文件图标.cmd`，再打开文件夹；若资源管理器仍缓存旧图标，可注销后重新登录。脚本已调用系统图标变更通知。
+更新到 v1.1.1 或更高版本后重新运行 `应用文件图标.cmd`，脚本会将新内容保存到新的图标路径，并等待系统图标变更通知送达。然后重新打开文件夹查看。若只覆盖旧 ICO 而未重新应用，资源管理器可能继续沿用旧路径缓存。
 
 **文件夹移动后图标不显示**
 
@@ -211,6 +220,7 @@ archive-moe-icons/
 ```powershell
 python -m unittest discover -s tests -p "test_*.py" -v
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-IconScripts.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-IconCache.ps1"
 python ".\工具\icon_customizer.py" --smoke-ui
 ```
 

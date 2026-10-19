@@ -22,7 +22,7 @@ DEFAULT_PALETTE = HERE.parent/'配色方案'/'默认配色.json'
 MASTER_PATH = HERE.parent/'模板素材'/'无字底图.png'
 EXPORTS_DIR = HERE.parent/'导出图标'
 SIZES = [16, 24, 32, 48, 64, 128, 256]
-STYLES = {'compact': '简洁文字（推荐）', 'adaptive': '小尺寸简洁 / 大尺寸角色', 'character': '原角色风格'}
+STYLES = {'adaptive': '自动切换（推荐）', 'compact': '全部简洁文字', 'character': '全部角色图标'}
 NAVY = '#07294F'
 HEX = re.compile(r'^#[0-9a-fA-F]{6}$')
 SAFE_ID = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9_-]{0,29}$')
@@ -73,7 +73,7 @@ def read_palette(path):
 
 
 class Renderer:
-    def __init__(self, master=None, style='compact'):
+    def __init__(self, master=None, style='adaptive'):
         if style not in STYLES:
             raise ValueError('未知图标风格。')
         self.style = style
@@ -130,7 +130,7 @@ def save_icon(image, png_path, ico_path, frames=None):
     image.save(ico_path, format='ICO', sizes=[(n, n) for n in SIZES], append_images=frames or [])
 
 
-def contact_sheet(images, palette, path, title='压缩包娘 · 简洁格式图标'):
+def contact_sheet(images, palette, path, title='压缩包娘 · 自动尺寸切换'):
     cols, cw, ch, margin = 6, 232, 268, 48
     rows = (len(images)+cols-1)//cols
     board = Image.new('RGB', (cols*cw+margin*2, rows*ch+170), '#F2F4F8')
@@ -198,7 +198,7 @@ class App:
         header = tk.Frame(root, bg='#F2F4F8')
         header.pack(fill='x', padx=28, pady=(22, 12))
         tk.Label(header, text='压缩包娘', font=('Microsoft YaHei UI', 24, 'bold'), bg='#F2F4F8', fg='#172C4B').pack(anchor='w')
-        tk.Label(header, text='逐尺寸绘制清晰标签，可选择简洁文字或原角色风格。', font=('Microsoft YaHei UI', 10), bg='#F2F4F8', fg='#64748B').pack(anchor='w', pady=(4, 0))
+        tk.Label(header, text='小尺寸简洁、大尺寸精细，由 Windows 按显示尺寸自动选取。', font=('Microsoft YaHei UI', 10), bg='#F2F4F8', fg='#64748B').pack(anchor='w', pady=(4, 0))
         main = tk.Frame(root, bg='#F2F4F8')
         main.pack(fill='both', expand=True, padx=28, pady=12)
         left = ttk.Frame(main)
@@ -432,7 +432,7 @@ def main():
     parser = argparse.ArgumentParser(description='离线批量生成可自定义颜色的压缩包娘图标')
     parser.add_argument('--palette', type=Path, default=DEFAULT_PALETTE)
     parser.add_argument('--export', type=Path, help='不打开窗口，按 JSON 配色批量导出')
-    parser.add_argument('--style', choices=list(STYLES), default='compact', help='compact 简洁文字（默认）；adaptive 小尺寸简洁、大尺寸角色；character 原角色')
+    parser.add_argument('--style', choices=list(STYLES), default='adaptive', help='adaptive 自动切换（默认）；compact 全部简洁文字；character 全部角色')
     parser.add_argument('--smoke-ui', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
     palette, renderer = read_palette(args.palette), Renderer(style=args.style)

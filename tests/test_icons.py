@@ -61,6 +61,8 @@ class IconTests(unittest.TestCase):
             destination = Path(temporary)/'export'
             tool.export_batch(self.renderer, chosen, destination)
             self.assertEqual(tool.read_palette(destination/'palette.json'), chosen)
+            rendering = json.loads((destination/'rendering.json').read_text(encoding='utf-8'))
+            self.assertEqual(rendering, {'style': 'adaptive', 'sizes': tool.SIZES})
             self.assertTrue((destination/'preview.png').is_file())
             with zipfile.ZipFile(str(destination)+'.zip') as archive:
                 self.assertIsNone(archive.testzip())
@@ -87,10 +89,12 @@ class IconTests(unittest.TestCase):
 
     def test_adaptive_style_switches_to_character_only_at_large_sizes(self):
         item = self.palette[0]
+        self.assertEqual(self.renderer.style, 'adaptive')
         adaptive = tool.Renderer(style='adaptive')
+        compact = tool.Renderer(style='compact')
         character = tool.Renderer(style='character')
         for size in [16, 24, 32, 48]:
-            self.assertTrue(np.array_equal(np.array(adaptive.render(item, size)), np.array(self.renderer.render(item, size))))
+            self.assertTrue(np.array_equal(np.array(adaptive.render(item, size)), np.array(compact.render(item, size))))
         for size in [64, 128, 256]:
             self.assertTrue(np.array_equal(np.array(adaptive.render(item, size)), np.array(character.render(item, size))))
 

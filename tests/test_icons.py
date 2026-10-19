@@ -34,9 +34,10 @@ class IconTests(unittest.TestCase):
 
     def test_hair_and_body_colors_are_independent(self):
         item = self.palette[0]
-        base = np.array(self.renderer.render(item, 1280))
-        hair = np.array(self.renderer.render(dict(item, hair='#F062A3'), 1280))
-        body = np.array(self.renderer.render(dict(item, body='#22A886'), 1280))
+        character = tool.Renderer(style='character')
+        base = np.array(character.render(item, 1280))
+        hair = np.array(character.render(dict(item, hair='#F062A3'), 1280))
+        body = np.array(character.render(dict(item, body='#22A886'), 1280))
         self.assertFalse(np.array_equal(base[:440], hair[:440]))
         self.assertTrue(np.array_equal(base[470:], hair[470:]))
         self.assertFalse(np.array_equal(base[470:], body[470:]))
@@ -67,6 +68,31 @@ class IconTests(unittest.TestCase):
             for item in chosen:
                 with Image.open(destination/'ico'/f"{item['id']}.ico") as image:
                     self.assertEqual(len(image.ico.sizes()), 7)
+                    for size in tool.SIZES:
+                        expected = self.renderer.render(item, size)
+                        self.assertTrue(np.array_equal(np.array(image.ico.getimage((size, size)).convert('RGBA')), np.array(expected)))
+
+    def test_native_small_frames_are_crisp_and_keep_full_labels(self):
+        from compact_icons import label_lines
+        for item in self.palette:
+            with self.subTest(format=item['label']):
+                image = self.renderer.render(item, 16)
+                self.assertLessEqual(len(image.getcolors()), 4)
+                self.assertEqual(set(image.getchannel('A').getdata()), {0, 255})
+                self.assertEqual(''.join(label_lines(item['label'], 16)), item['label'])
+                self.assertEqual(image.getpixel((4, 0))[:3], tool.parse_hex(item['body']))
+                # Native 16px artwork must not silently become a scaled copy.
+                downscaled = self.renderer.render(item, 1024).resize((16, 16), Image.Resampling.LANCZOS)
+                self.assertFalse(np.array_equal(np.array(image), np.array(downscaled)))
+
+    def test_adaptive_style_switches_to_character_only_at_large_sizes(self):
+        item = self.palette[0]
+        adaptive = tool.Renderer(style='adaptive')
+        character = tool.Renderer(style='character')
+        for size in [16, 24, 32, 48]:
+            self.assertTrue(np.array_equal(np.array(adaptive.render(item, size)), np.array(self.renderer.render(item, size))))
+        for size in [64, 128, 256]:
+            self.assertTrue(np.array_equal(np.array(adaptive.render(item, size)), np.array(character.render(item, size))))
 
 
 if __name__ == '__main__':

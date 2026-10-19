@@ -1,25 +1,38 @@
 # 压缩包娘图标工具 · Archive Moe Icons
 
-一套以「压缩包娘」为主题的 Windows 文件图标与离线批量改色工具。用醒目的格式标签识别文件，通过发色和包体颜色区分不同格式。
+一套小尺寸优先的 Windows 文件图标与离线批量改色工具。默认采用清晰的格式文字和主题色框，也保留「压缩包娘」角色风格作为可选模式。
 
 包含 **24 种格式的透明 PNG、7 尺寸 ICO、独立改色工具，以及自动应用 / 恢复文件图标的脚本**。
 
 ![整套图标预览](预览图/整套图标预览.png)
 
+## v1.1.0：小尺寸重新绘制
+
+旧版将人物插画统一缩小，导致 16～32 px 下文字和纹路挤在一起。新版为 ICO 的每个尺寸独立绘制，默认去除人物、拉链、纸页、渐变和阴影，只保留主题色与完整格式标签。
+
+- **16 px**：按像素网格绘制不透明笔画，避免文字被抗锯齿冲淡。
+- **16 / 24 / 32 px 长标签**：完整分成两行，例如 `LZ / MA`、`QCO / W2`，不缩写或丢弃字符。
+- **48 px 及以上**：使用更大的单行格式文字。
+- **7 个尺寸独立保存**：ICO 中保留各自的实际画面，工具底部也展示对应尺寸，避免导出或预览时重新缩小大图。
+
+![小尺寸前后对比](预览图/小尺寸对比.png)
+
+对比图每行上方是 v1.0.0、下方是新版；右侧为新版 16 px 的 5 倍像素放大图。
+
 ## 下载
 
 前往 [Releases](https://github.com/ichizxy/archive-moe-icons/releases/latest) 下载：
 
-- `archive-moe-icons-v1.0.0.zip`：完整项目，含图标、改色工具、自动替换脚本和文档。
-- `archive-moe-icons-ico-v1.0.0.zip`：仅 ICO 图标及预览，适合手动设置图标。
+- `archive-moe-icons-v1.1.0.zip`：完整项目，含图标、改色工具、自动替换脚本和文档。
+- `archive-moe-icons-ico-v1.1.0.zip`：仅 ICO 图标及预览，适合手动设置图标。
 
 解压完整包到固定位置后再应用图标。注册表会记录 ICO 的完整路径；移动目录后，需要在新位置重新运行应用脚本。
 
 ## 功能
 
-- **格式标签优先**：大号深色标签，长格式名称完整显示。
-- **统一二次元风格**：Q 版少女、压缩包、拉链和文件页采用同一构图。
-- **独立配色**：发色与包体色可分别选择，也可以一键同步。
+- **格式标签优先**：简洁的主题色框与高对比度大字，长格式名称完整显示。
+- **三种风格**：简洁文字（默认）、小尺寸简洁 / 大尺寸角色、原角色风格。
+- **独立配色**：主题色和点缀色可分别选择；角色模式下对应包体色与发色。
 - **批量导出**：一次生成全部格式的 PNG、ICO、预览图、配色 JSON 和 ZIP。
 - **可扩展格式**：新增标签、保存配色方案、重新载入继续编辑。
 - **自动替换和恢复**：检测当前用户已关联到 7-Zip 的格式，先备份，再应用图标，支持预览模式和恢复首次配置。
@@ -69,15 +82,17 @@ python -m pip install -r requirements.txt
 双击 **`启动工具.cmd`**，然后：
 
 1. 在左侧选择格式。
-2. 修改格式标签、发色和包体色，实时查看效果。
+2. 在预览区上方选择风格，再修改标签和颜色，实时查看效果。
 3. 点击「导出当前 PNG + ICO」导出一个格式，或点击「批量导出整套 + ZIP」生成全部格式。
 4. 使用「保存配色方案」保存 JSON，之后可重新载入。
 
-![发色与包体颜色独立修改](预览图/独立改色演示.png)
+「简洁文字」在全部尺寸使用主题色框和标签；「小尺寸简洁 / 大尺寸角色」在 16～48 px 使用简洁画面，64 px 及以上保留角色；「原角色风格」保留旧版插画。简洁版中的点缀色仅在 32 px 及以上、且与主题色不同时显示，避免干扰更小的文字。
+
+![角色模式的发色与包体颜色独立修改](预览图/独立改色演示.png)
 
 启动器会从 `PATH` 和 Windows `py` 启动器中寻找可用 Python。需要指定 Python 时，可设置环境变量 `ARCHIVE_MOE_PYTHON` 为对应 `python.exe` 的完整路径。
 
-工具离线运行，使用包内底图进行改色和排版，无需登录或调用图像生成 API。工具导出的文字使用系统粗体字，字形与成品图标中的文字可能略有不同。
+工具离线运行，无需登录或调用图像生成 API。简洁版按尺寸直接绘制，角色版使用包内底图改色和排版。
 
 ### 4. 应用自己导出的图标
 
@@ -105,9 +120,15 @@ python ".\工具\icon_customizer.py" --export ".\导出图标\my-icons"
 
 # 使用自定义配色方案
 python ".\工具\icon_customizer.py" --palette ".\配色方案\my-palette.json" --export ".\导出图标\my-icons"
+
+# 小尺寸使用简洁标签，64 px 及以上保留原角色
+python ".\工具\icon_customizer.py" --style adaptive --export ".\导出图标\adaptive-icons"
+
+# 全部尺寸使用原角色
+python ".\工具\icon_customizer.py" --style character --export ".\导出图标\character-icons"
 ```
 
-输出包含 `png/`、`ico/`、`preview.png`、`palette.json`，并生成同名 ZIP。
+输出包含 `png/`、`ico/`、`preview.png`、`palette.json`、`rendering.json`，并生成同名 ZIP；`rendering.json` 记录本次风格和尺寸。默认风格为 `compact`。
 
 ## 配色方案
 
@@ -129,8 +150,8 @@ python ".\工具\icon_customizer.py" --palette ".\配色方案\my-palette.json" 
 | --- | --- |
 | `id` | 唯一输出文件名；字母、数字、下划线或短横线 |
 | `label` | 图标上的大标签，1～8 个字母、数字或 `. + _ -` |
-| `hair` | 发色，`#RRGGBB` |
-| `body` | 包体色，`#RRGGBB` |
+| `hair` | 角色发色 / 简洁版点缀色，`#RRGGBB` |
+| `body` | 包体色 / 格式主题色，`#RRGGBB` |
 | `extensions` | 自动应用脚本使用的参考扩展名，不含开头的点 |
 
 改色工具可以新增格式；自动应用脚本的格式映射读取默认配色 JSON。如需让新增格式参与自动应用，应将映射保存到默认方案，并为它提供同名 ICO。
@@ -139,7 +160,7 @@ python ".\工具\icon_customizer.py" --palette ".\配色方案\my-palette.json" 
 
 `7Z`、`ZIP`、`RAR`、`TAR`、`GZ`、`BZ2`、`XZ`、`ZST`、`LZMA`、`CAB`、`ARJ`、`LZH`、`Z`、`WIM`、`ISO`、`DMG`、`IMG`、`VHD`、`VHDX`、`VMDK`、`VDI`、`QCOW2`、`RPM`、`DEB`。
 
-每个 ICO 包含 **16、24、32、48、64、128、256 px** 的透明图像。32 px 及以上更适合显示角色和完整的长标签。
+每个 ICO 包含 **16、24、32、48、64、128、256 px** 的独立透明图像。默认成品均为简洁版；完整角色可通过工具中的可选风格重新导出。
 
 ## 目录结构
 
@@ -153,7 +174,7 @@ archive-moe-icons/
 ├─ 恢复原图标.cmd
 ├─ 工具/                 # 改色程序、启动脚本与图标应用/恢复脚本
 ├─ 成品图标/
-│  ├─ PNG/               # 24 张透明原图
+│  ├─ PNG/               # 24 张简洁版透明图
 │  └─ ICO/               # 24 个多尺寸 Windows 图标
 ├─ 预览图/
 ├─ 配色方案/
@@ -172,7 +193,7 @@ archive-moe-icons/
 
 **图标没有立即更新**
 
-重新打开文件夹；若资源管理器仍缓存旧图标，可注销后重新登录。脚本已调用系统图标变更通知。
+更新到新版后重新运行 `应用文件图标.cmd`，再打开文件夹；若资源管理器仍缓存旧图标，可注销后重新登录。脚本已调用系统图标变更通知。
 
 **文件夹移动后图标不显示**
 
@@ -192,4 +213,4 @@ python ".\工具\icon_customizer.py" --smoke-ui
 
 注册表测试使用临时、未关联到真实文件的测试类，并在结束后恢复和清理；实际图标应用另以 `-WhatIf` 检查，不在测试中替换真实格式图标。
 
-图案使用 imagegen 制作，生成提示词保存在 `生成提示词/`。图标应用方式依据 Microsoft 的 [文件类型注册说明](https://learn.microsoft.com/en-us/windows/win32/shell/fa-file-types)、[自定义文件类型图标](https://learn.microsoft.com/en-us/windows/win32/shell/how-to-assign-a-custom-icon-to-a-file-type)和 [SHChangeNotify](https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shchangenotify) 文档实现。
+原角色底图使用 imagegen 制作，提示词保存在 `生成提示词/`；新版简洁图标由 `工具/compact_icons.py` 按像素尺寸直接绘制。图标应用方式依据 Microsoft 的 [文件类型注册说明](https://learn.microsoft.com/en-us/windows/win32/shell/fa-file-types)、[自定义文件类型图标](https://learn.microsoft.com/en-us/windows/win32/shell/how-to-assign-a-custom-icon-to-a-file-type)和 [SHChangeNotify](https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shchangenotify) 文档实现。

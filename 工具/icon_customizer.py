@@ -12,11 +12,17 @@ import zipfile
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
+# Also support importing this file through importlib from external scripts.
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+from compact_icons import render_compact
+
 HERE = Path(__file__).resolve().parent
 DEFAULT_PALETTE = HERE.parent/'配色方案'/'默认配色.json'
 MASTER_PATH = HERE.parent/'模板素材'/'无字底图.png'
 EXPORTS_DIR = HERE.parent/'导出图标'
 SIZES = [16, 24, 32, 48, 64, 128, 256]
+STYLES = {'compact': '简洁文字（推荐）', 'adaptive': '小尺寸简洁 / 大尺寸角色', 'character': '原角色风格'}
 NAVY = '#07294F'
 HEX = re.compile(r'^#[0-9a-fA-F]{6}$')
 SAFE_ID = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9_-]{0,29}$')
@@ -67,7 +73,10 @@ def read_palette(path):
 
 
 class Renderer:
-    def __init__(self, master=None):
+    def __init__(self, master=None, style='compact'):
+        if style not in STYLES:
+            raise ValueError('未知图标风格。')
+        self.style = style
         self.master_path = Path(master or MASTER_PATH)
         with Image.open(self.master_path) as im:
             self.master = im.convert('RGBA')
@@ -85,6 +94,8 @@ class Renderer:
 
     def render(self, item, size=1024):
         item = validate_palette([item])[0]
+        if self.style == 'compact' or (self.style == 'adaptive' and size <= 48):
+            return render_compact(item, size)
         arr = self.raw.copy()
         for region, requested in [(self.hair_region, item['hair']), (self.body_region, item['body'])]:
             target = np.array(parse_hex(requested), dtype=np.float32)/255.0
@@ -107,15 +118,19 @@ class Renderer:
         return result if result.size == (size, size) else result.resize((size, size), Image.Resampling.LANCZOS)
 
 
-def save_icon(image, png_path, ico_path):
+def save_icon(image, png_path, ico_path, frames=None):
     png_path, ico_path = Path(png_path), Path(ico_path)
     png_path.parent.mkdir(parents=True, exist_ok=True)
     ico_path.parent.mkdir(parents=True, exist_ok=True)
     image.save(png_path)
-    image.save(ico_path, format='ICO', sizes=[(n, n) for n in SIZES])
+    if frames is not None:
+        frames = list(frames)
+        if sorted(frame.size for frame in frames) != sorted((n, n) for n in SIZES):
+            raise ValueError('ICO 必须包含全部 7 个独立尺寸。')
+    image.save(ico_path, format='ICO', sizes=[(n, n) for n in SIZES], append_images=frames or [])
 
 
-def contact_sheet(images, palette, path, title='压缩包娘 · 图标套装'):
+def contact_sheet(images, palette, path, title='压缩包娘 · 简洁格式图标'):
     cols, cw, ch, margin = 6, 232, 268, 48
     rows = (len(images)+cols-1)//cols
     board = Image.new('RGB', (cols*cw+margin*2, rows*ch+170), '#F2F4F8')
@@ -125,7 +140,7 @@ def contact_sheet(images, palette, path, title='压缩包娘 · 图标套装'):
     regular = ImageFont.truetype(find_font(), 17)
     small = ImageFont.truetype(find_font(), 12)
     draw.text((margin, 32), title, font=head, fill='#172C4B')
-    draw.text((margin, 88), f'{len(palette)} FORMATS  /  PNG + ICO  /  EDITABLE HAIR & POUCH COLORS', font=regular, fill='#6B7890')
+    draw.text((margin, 88), f'{len(palette)} FORMATS  /  PNG + ICO  /  NATIVE SMALL-SIZE LETTERING', font=regular, fill='#6B7890')
     for i, (image, item) in enumerate(zip(images, palette)):
         x, y = margin+(i%cols)*cw, 140+(i//cols)*ch
         draw.rounded_rectangle((x+8, y, x+cw-8, y+ch-18), radius=18, fill='white')
@@ -147,12 +162,13 @@ def export_batch(renderer, palette, output, progress=None, make_zip=True):
     images = []
     for index, item in enumerate(palette):
         im = renderer.render(item)
-        save_icon(im, output/'png'/f"{item['id']}.png", output/'ico'/f"{item['id']}.ico")
+        save_icon(im, output/'png'/f"{item['id']}.png", output/'ico'/f"{item['id']}.ico", frames=[renderer.render(item, n) for n in SIZES])
         images.append(im)
         if progress:
             progress(index+1, len(palette))
     (output/'palette.json').write_text(json.dumps(palette, ensure_ascii=False, indent=2), encoding='utf-8')
-    contact_sheet(images, palette, output/'preview.png')
+    (output/'rendering.json').write_text(json.dumps({'style': renderer.style, 'sizes': SIZES}, ensure_ascii=False, indent=2), encoding='utf-8')
+    contact_sheet(images, palette, output/'preview.png', title='压缩包娘 · '+STYLES[renderer.style])
     if make_zip:
         with zipfile.ZipFile(str(output)+'.zip', 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
             for p in sorted(output.rglob('*')):
@@ -170,8 +186,8 @@ class App:
         self.palette = copy.deepcopy(palette)
         self.index, self.pending = 0, None
         root.title('压缩包娘 · 批量图标工具')
-        root.geometry('1060x750')
-        root.minsize(920, 670)
+        root.geometry('1060x840')
+        root.minsize(920, 790)
         root.configure(bg='#F2F4F8')
         style = ttk.Style(root)
         if 'vista' in style.theme_names():
@@ -182,7 +198,7 @@ class App:
         header = tk.Frame(root, bg='#F2F4F8')
         header.pack(fill='x', padx=28, pady=(22, 12))
         tk.Label(header, text='压缩包娘', font=('Microsoft YaHei UI', 24, 'bold'), bg='#F2F4F8', fg='#172C4B').pack(anchor='w')
-        tk.Label(header, text='改标签、选发色、换包体色，然后一键生成整套图标。', font=('Microsoft YaHei UI', 10), bg='#F2F4F8', fg='#64748B').pack(anchor='w', pady=(4, 0))
+        tk.Label(header, text='逐尺寸绘制清晰标签，可选择简洁文字或原角色风格。', font=('Microsoft YaHei UI', 10), bg='#F2F4F8', fg='#64748B').pack(anchor='w', pady=(4, 0))
         main = tk.Frame(root, bg='#F2F4F8')
         main.pack(fill='both', expand=True, padx=28, pady=12)
         left = ttk.Frame(main)
@@ -197,6 +213,10 @@ class App:
         ttk.Button(row, text='删除', command=self.remove).pack(side='left', padx=(6, 0))
         middle = tk.Frame(main, bg='#F2F4F8')
         middle.pack(side='left', fill='both', expand=True)
+        self.style_display = tk.StringVar(value=STYLES[renderer.style])
+        style_picker = ttk.Combobox(middle, state='readonly', textvariable=self.style_display, values=list(STYLES.values()), width=29)
+        style_picker.pack(pady=(0, 6))
+        style_picker.bind('<<ComboboxSelected>>', self.change_style)
         self.preview = tk.Canvas(middle, width=360, height=360, highlightthickness=0, bg='white')
         self.preview.pack(pady=(10, 12), expand=True)
         self.dark = tk.BooleanVar(value=False)
@@ -213,7 +233,7 @@ class App:
             ttk.Label(right, text=title).pack(anchor='w', pady=(9, 4))
             ttk.Entry(right, textvariable=var).pack(fill='x')
         self.color_buttons = {}
-        for title, var, field in [('发色', self.hair, 'hair'), ('包体颜色', self.body, 'body')]:
+        for title, var, field in [('角色发色 / 简洁版点缀色', self.hair, 'hair'), ('包体 / 格式主题色', self.body, 'body')]:
             ttk.Label(right, text=title).pack(anchor='w', pady=(18, 5))
             line = ttk.Frame(right)
             line.pack(fill='x')
@@ -274,6 +294,10 @@ class App:
             self.root.after_cancel(self.pending)
         self.pending = self.root.after(220, self.redraw)
 
+    def change_style(self, _event=None):
+        self.renderer.style = next(key for key, label in STYLES.items() if label == self.style_display.get())
+        self.redraw()
+
     def redraw(self):
         self.pending = None
         try:
@@ -291,7 +315,7 @@ class App:
         self.native_photos = []
         x = 14
         for size in SIZES[:5]:
-            photo = ImageTk.PhotoImage(rendered.resize((size, size), Image.Resampling.LANCZOS))
+            photo = ImageTk.PhotoImage(self.renderer.render(item, size))
             self.native_photos.append(photo)
             self.native.create_image(x, 36, image=photo, anchor='w')
             x += size+22
@@ -354,7 +378,7 @@ class App:
             folder = filedialog.askdirectory(initialdir=str(EXPORTS_DIR), title='选择 PNG 和 ICO 保存文件夹', parent=self.root)
             if folder:
                 out = Path(folder)
-                save_icon(self.renderer.render(item), out/'png'/f"{item['id']}.png", out/'ico'/f"{item['id']}.ico")
+                save_icon(self.renderer.render(item), out/'png'/f"{item['id']}.png", out/'ico'/f"{item['id']}.ico", frames=[self.renderer.render(item, n) for n in SIZES])
                 self.status.set(f'已导出 PNG 和多尺寸 ICO：{out}')
         except Exception as e:
             self.error(e)
@@ -408,9 +432,10 @@ def main():
     parser = argparse.ArgumentParser(description='离线批量生成可自定义颜色的压缩包娘图标')
     parser.add_argument('--palette', type=Path, default=DEFAULT_PALETTE)
     parser.add_argument('--export', type=Path, help='不打开窗口，按 JSON 配色批量导出')
+    parser.add_argument('--style', choices=list(STYLES), default='compact', help='compact 简洁文字（默认）；adaptive 小尺寸简洁、大尺寸角色；character 原角色')
     parser.add_argument('--smoke-ui', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
-    palette, renderer = read_palette(args.palette), Renderer()
+    palette, renderer = read_palette(args.palette), Renderer(style=args.style)
     if args.export:
         export_batch(renderer, palette, args.export)
         print(f'Exported {len(palette)} formats to {args.export}')
@@ -426,8 +451,12 @@ def main():
         app.body.set('#22AA88')
         app.redraw()
         root.update()
+        for style, display in STYLES.items():
+            app.style_display.set(display)
+            app.change_style()
+            root.update()
         root.destroy()
-        print('UI initialized; independent hair/body color update passed.')
+        print('UI initialized; color updates and all three rendering styles passed.')
     else:
         root.mainloop()
 
